@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageVersion>1.0.0</PackageVersion>
@@ -13,10 +13,7 @@
     <RepositoryUrl>https://github.com/rrennoir/Jackal</RepositoryUrl>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Jackal.snk</AssemblyOriginatorKeyFile>
+	<LangVersion>10.0</LangVersion>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="TimerSink.NET" Version="4.3.1" />
-  </ItemGroup>
 
 </Project>
