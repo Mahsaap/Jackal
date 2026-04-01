@@ -1,7 +1,9 @@
-﻿using System.IO.MemoryMappedFiles;
+using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using Jackal.Types.Enums;
-using TimerSink;
+using System.Timers;
+using System;
+//using TimerSink;
 
 namespace Jackal;
 
@@ -20,7 +22,9 @@ public class JackalReader : IDisposable
     private readonly MemoryMappedFile _graphicsMap;
     private readonly MemoryMappedFile _staticInfosMap;
 
-    private readonly TimingSink _timingSink;
+    private readonly System.Timers.Timer _timingPhysics;
+    private readonly System.Timers.Timer _timingGraphics;
+    private readonly System.Timers.Timer _timingStatic;
     private readonly bool _newDataOnly;
 
     private Physics? _oldPhysics;
@@ -43,10 +47,9 @@ public class JackalReader : IDisposable
         _graphicsMap = MemoryMappedFile.CreateOrOpen(GraphicPath, Marshal.SizeOf<Graphics>());
         _staticInfosMap = MemoryMappedFile.CreateOrOpen(StaticInfoPath, Marshal.SizeOf<StaticInfos>());
 
-        _timingSink = new TimingSink();
-        _timingSink.TimingSinkItems.Add(new TimingSinkItem(ReadPhysics, physicsInterval));
-        _timingSink.TimingSinkItems.Add(new TimingSinkItem(ReadGraphics, graphicsInterval));
-        _timingSink.TimingSinkItems.Add(new TimingSinkItem(ReadStaticInfos, staticInterval));
+        _timingPhysics = new System.Timers.Timer(physicsInterval);
+        _timingGraphics = new System.Timers.Timer(graphicsInterval);
+        _timingStatic = new System.Timers.Timer(staticInterval);
     }
 
     ~JackalReader()
@@ -56,12 +59,35 @@ public class JackalReader : IDisposable
 
     public void Start()
     {
-        _timingSink.Start();
+        _timingPhysics.Start();
+        _timingGraphics.Start();
+        _timingStatic.Start();
+
+        _timingPhysics.Elapsed += _timingPhysics_Elapsed;
+        _timingGraphics.Elapsed += _timingGraphics_Elapsed;
+        _timingStatic.Elapsed += _timingStatic_Elapsed;
+    }
+
+    private void _timingStatic_Elapsed(object sender, ElapsedEventArgs e)
+    {
+        ReadStaticInfos();
+    }
+
+    private void _timingGraphics_Elapsed(object sender, ElapsedEventArgs e)
+    {
+        ReadGraphics();
+    }
+
+    private void _timingPhysics_Elapsed(object sender, ElapsedEventArgs e)
+    {
+        ReadPhysics();
     }
 
     public void Stop()
     {
-        _timingSink.Stop();
+        _timingPhysics.Stop();
+        _timingGraphics.Stop();
+        _timingStatic.Stop();
     }
 
     private static T? ReadMap<T>(MemoryMappedFile file)
@@ -120,7 +146,9 @@ public class JackalReader : IDisposable
     {
         if (_isDisposed) return;
 
-        _timingSink.Stop();
+        _timingPhysics.Stop();
+        _timingGraphics.Stop();
+        _timingStatic.Stop();
 
         if (isDisposing)
         {
